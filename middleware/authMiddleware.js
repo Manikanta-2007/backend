@@ -24,20 +24,7 @@ exports.protect = async (req, res, next) => {
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret_key');
 
-    // Check if DB is connected
-    if (mongoose.connection.readyState !== 1) {
-      console.log('\x1b[33m⚠\x1b[0m DB Offline: Bypassing Profile Verification for Demo');
-      
-      // Assign mock user based on decoded ID (or just a default admin for demo)
-      req.user = {
-        id: decoded.id,
-        name: decoded.role === 'admin' ? 'Demo Admin' : 'Demo Student',
-        email: decoded.role === 'admin' ? 'admin@edu.com' : 'student@edu.com',
-        role: decoded.role || 'user',
-        status: 'active'
-      };
-      return next();
-    }
+
 
     req.user = await User.findById(decoded.id);
 

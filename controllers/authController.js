@@ -11,14 +11,7 @@ exports.register = async (req, res, next) => {
   const { name, email, password, role, secretKey } = req.body;
 
   try {
-    // Check if DB is connected
-    if (mongoose.connection.readyState !== 1) {
-      console.log('\x1b[33m⚠\x1b[0m DB Offline: Mocking Successful Registration');
-      return res.status(201).json({
-        success: true,
-        message: 'Account created successfully (Demo Mode)',
-      });
-    }
+
 
     // Check if user already exists
     const userExists = await User.findOne({ email });
@@ -59,21 +52,7 @@ exports.login = async (req, res, next) => {
   const { email, password } = req.body;
 
   try {
-    // Check if DB is connected
-    if (mongoose.connection.readyState !== 1) {
-      console.log('\x1b[33m⚠\x1b[0m DB Offline: Mocking Successful Login for any credentials');
-      
-      // Look for match in mock users, otherwise return a default profile
-      const isDemoAdmin = email && email.toLowerCase().includes('admin');
-      const user = mockUsers.find(u => u.email === email) || {
-        name: isDemoAdmin ? 'Demo Admin' : 'Demo User',
-        email: email || 'demo@edu.com',
-        role: isDemoAdmin ? 'admin' : 'user',
-        status: 'active'
-      };
-      
-      return sendTokenResponse({ ...user, _id: 'mock_id' }, 200, res, `Login successful (Demo ${isDemoAdmin ? 'Admin' : 'User'})`);
-    }
+
 
     // Validate email & password
     if (!email || !password) {
@@ -109,13 +88,7 @@ exports.login = async (req, res, next) => {
 // @access  Private
 exports.getMe = async (req, res, next) => {
   try {
-    // If DB is offline, return a mock user
-    if (mongoose.connection.readyState !== 1) {
-        return res.status(200).json({
-            success: true,
-            data: req.user || { id: 'mock_id', name: 'Demo User', email: 'demo@edu.com', role: 'user' }
-        });
-    }
+
 
     const user = await User.findById(req.user.id);
 
@@ -143,6 +116,7 @@ const sendTokenResponse = (user, statusCode, res, message = '') => {
       name: user.name,
       email: user.email,
       role: user.role,
+      createdAt: user.createdAt,
     },
     message: message || (statusCode === 201 ? 'Account created successfully' : 'Success'),
   });

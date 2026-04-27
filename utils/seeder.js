@@ -17,14 +17,14 @@ mongoose.connect(process.env.MONGODB_URI);
 // (For simplicity, I'll define sample data directly here)
 const users = [
   {
-    name: 'Admin User',
+    name: 'Admin',
     email: 'admin@edu.com',
     password: 'password123',
     role: 'admin',
     status: 'active'
   },
   {
-    name: 'Student User',
+    name: 'Student',
     email: 'student@edu.com',
     password: 'password123',
     role: 'user',
