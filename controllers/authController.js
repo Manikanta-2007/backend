@@ -130,7 +130,7 @@ exports.getMe = async (req, res, next) => {
 // Get token from model, create cookie and send response
 const sendTokenResponse = (user, statusCode, res, message = '') => {
   // Create token
-  const token = jwt.sign({ id: user._id || user.id, role: user.role }, process.env.JWT_SECRET, {
+  const token = jwt.sign({ id: user._id || user.id, role: user.role }, process.env.JWT_SECRET || 'fallback_secret_key', {
     expiresIn: '30d',
   });
 
