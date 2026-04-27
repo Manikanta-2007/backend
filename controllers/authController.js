@@ -63,15 +63,16 @@ exports.login = async (req, res, next) => {
     if (mongoose.connection.readyState !== 1) {
       console.log('\x1b[33m⚠\x1b[0m DB Offline: Mocking Successful Login for any credentials');
       
-      // Look for match in mock users, otherwise return a default student profile
+      // Look for match in mock users, otherwise return a default profile
+      const isDemoAdmin = email && email.toLowerCase().includes('admin');
       const user = mockUsers.find(u => u.email === email) || {
-        name: 'Demo User',
+        name: isDemoAdmin ? 'Demo Admin' : 'Demo User',
         email: email || 'demo@edu.com',
-        role: 'user',
+        role: isDemoAdmin ? 'admin' : 'user',
         status: 'active'
       };
       
-      return sendTokenResponse({ ...user, _id: 'mock_id' }, 200, res, 'Login successful (Demo Mode)');
+      return sendTokenResponse({ ...user, _id: 'mock_id' }, 200, res, `Login successful (Demo ${isDemoAdmin ? 'Admin' : 'User'})`);
     }
 
     // Validate email & password
