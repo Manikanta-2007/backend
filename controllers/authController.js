@@ -8,7 +8,7 @@ const { users: mockUsers } = require('../utils/sampleData');
 // @route   POST /api/auth/register
 // @access  Public
 exports.register = async (req, res, next) => {
-  const { name, email, password } = req.body;
+  const { name, email, password, role, secretKey } = req.body;
 
   try {
     // Check if DB is connected
@@ -26,11 +26,21 @@ exports.register = async (req, res, next) => {
       return next(new ErrorResponse('User already exists', 400));
     }
 
+    let assignedRole = 'user';
+    if (role === 'admin') {
+      if (secretKey === 'admin123') {
+        assignedRole = 'admin';
+      } else {
+        return next(new ErrorResponse('Invalid admin secret key', 400));
+      }
+    }
+
     // Create user
     await User.create({
       name,
       email,
       password,
+      role: assignedRole,
     });
 
     res.status(201).json({
@@ -102,7 +112,7 @@ exports.getMe = async (req, res, next) => {
     if (mongoose.connection.readyState !== 1) {
         return res.status(200).json({
             success: true,
-            data: { id: 'mock_id', name: 'Demo User', email: 'demo@edu.com', role: 'admin' }
+            data: req.user || { id: 'mock_id', name: 'Demo User', email: 'demo@edu.com', role: 'user' }
         });
     }
 
@@ -120,7 +130,7 @@ exports.getMe = async (req, res, next) => {
 // Get token from model, create cookie and send response
 const sendTokenResponse = (user, statusCode, res, message = '') => {
   // Create token
-  const token = jwt.sign({ id: user._id || user.id }, process.env.JWT_SECRET, {
+  const token = jwt.sign({ id: user._id || user.id, role: user.role }, process.env.JWT_SECRET, {
     expiresIn: '30d',
   });
 

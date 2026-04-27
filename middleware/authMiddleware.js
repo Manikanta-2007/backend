@@ -31,9 +31,9 @@ exports.protect = async (req, res, next) => {
       // Assign mock user based on decoded ID (or just a default admin for demo)
       req.user = {
         id: decoded.id,
-        name: 'Demo Admin',
-        email: 'admin@edu.com',
-        role: 'admin',
+        name: decoded.role === 'admin' ? 'Demo Admin' : 'Demo Student',
+        email: decoded.role === 'admin' ? 'admin@edu.com' : 'student@edu.com',
+        role: decoded.role || 'user',
         status: 'active'
       };
       return next();
