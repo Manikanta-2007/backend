@@ -4,7 +4,7 @@ const Feedback = require('../models/Feedback');
 // @desc    Get all feedback for a resource
 // @route   GET /api/feedback/resource/:resourceId
 // @access  Public
-exports.getResourceFeedback = async (req, res, next) => {
+exports.getResourceFeedback = async (req, res) => {
   try {
     const feedback = await Feedback.find({ resourceId: req.params.resourceId })
       .populate('userId', 'name role')
@@ -16,14 +16,14 @@ exports.getResourceFeedback = async (req, res, next) => {
       data: feedback,
     });
   } catch (err) {
-    next(err);
+    res.status(500).json({ success: false, error: err.message || 'Server Error' });
   }
 };
 
 // @desc    Get all feedback (Admin)
 // @route   GET /api/feedback
 // @access  Private/Admin
-exports.getAllFeedback = async (req, res, next) => {
+exports.getFeedback = async (req, res) => {
   try {
     const feedback = await Feedback.find()
       .populate('userId', 'name email role')
@@ -36,14 +36,14 @@ exports.getAllFeedback = async (req, res, next) => {
       data: feedback,
     });
   } catch (err) {
-    next(err);
+    res.status(500).json({ success: false, error: err.message || 'Server Error' });
   }
 };
 
 // @desc    Add feedback for a resource
 // @route   POST /api/feedback
 // @access  Private
-exports.addFeedback = async (req, res, next) => {
+exports.createFeedback = async (req, res) => {
   try {
     req.body.userId = req.user.id;
 
@@ -54,6 +54,6 @@ exports.addFeedback = async (req, res, next) => {
       data: feedback,
     });
   } catch (err) {
-    next(err);
+    res.status(500).json({ success: false, error: err.message || 'Server Error' });
   }
 };

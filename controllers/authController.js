@@ -7,7 +7,7 @@ const { users: mockUsers } = require('../utils/sampleData');
 // @desc    Register user
 // @route   POST /api/auth/register
 // @access  Public
-exports.register = async (req, res, next) => {
+exports.register = async (req, res) => {
   const { name, email, password, role, secretKey } = req.body;
 
   try {
@@ -16,7 +16,7 @@ exports.register = async (req, res, next) => {
     // Check if user already exists
     const userExists = await User.findOne({ email });
     if (userExists) {
-      return next(new ErrorResponse('User already exists', 400));
+      return res.status(400).json({ success: false, error: 'User already exists' });
     }
 
     let assignedRole = 'user';
@@ -24,7 +24,7 @@ exports.register = async (req, res, next) => {
       if (secretKey === 'admin123') {
         assignedRole = 'admin';
       } else {
-        return next(new ErrorResponse('Invalid admin secret key', 400));
+        return res.status(400).json({ success: false, error: 'Invalid admin secret key' });
       }
     }
 
@@ -41,14 +41,14 @@ exports.register = async (req, res, next) => {
       message: 'Account created successfully',
     });
   } catch (err) {
-    next(err);
+    res.status(500).json({ success: false, error: err.message || 'Server Error' });
   }
 };
 
 // @desc    Login user
 // @route   POST /api/auth/login
 // @access  Public
-exports.login = async (req, res, next) => {
+exports.login = async (req, res) => {
   const { email, password } = req.body;
 
   try {
@@ -56,37 +56,37 @@ exports.login = async (req, res, next) => {
 
     // Validate email & password
     if (!email || !password) {
-      return next(new ErrorResponse('Please provide an email and password', 400));
+      return res.status(400).json({ success: false, error: 'Please provide an email and password' });
     }
 
     // Check for user
     const user = await User.findOne({ email }).select('+password');
 
     if (!user) {
-      return next(new ErrorResponse('Invalid email or password', 401));
+      return res.status(401).json({ success: false, error: 'Invalid email or password' });
     }
 
     // Check if password matches
     const isMatch = await user.matchPassword(password);
 
     if (!isMatch) {
-      return next(new ErrorResponse('Invalid email or password', 401));
+      return res.status(401).json({ success: false, error: 'Invalid email or password' });
     }
 
     if (user.status === 'blocked') {
-      return next(new ErrorResponse('Your account has been blocked', 403));
+      return res.status(403).json({ success: false, error: 'Your account has been blocked' });
     }
 
     sendTokenResponse(user, 200, res, 'Login successful');
   } catch (err) {
-    next(err);
+    res.status(500).json({ success: false, error: err.message || 'Server Error' });
   }
 };
 
 // @desc    Get current user profile
 // @route   GET /api/auth/me
 // @access  Private
-exports.getMe = async (req, res, next) => {
+exports.getMe = async (req, res) => {
   try {
 
 
@@ -97,7 +97,58 @@ exports.getMe = async (req, res, next) => {
       data: user,
     });
   } catch (err) {
-    next(err);
+    res.status(500).json({ success: false, error: err.message || 'Server Error' });
+  }
+};
+
+// @desc    Forgot Password
+// @route   POST /api/auth/forgotpassword
+// @access  Public
+exports.forgotPassword = async (req, res) => {
+  try {
+    const user = await User.findOne({ email: req.body.email });
+
+    if (!user) {
+      return res.status(404).json({ success: false, error: 'Email not registered' });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Email verified successfully',
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message || 'Server Error' });
+  }
+};
+
+// @desc    Reset Password
+// @route   PUT /api/auth/resetpassword
+// @access  Public
+exports.resetPassword = async (req, res) => {
+  try {
+    const { email, newPassword } = req.body;
+
+    if (!email || !newPassword) {
+      return res.status(400).json({ success: false, error: 'Please provide email and new password' });
+    }
+
+    // Find user by email
+    const user = await User.findOne({ email }).select('+password');
+
+    if (!user) {
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
+
+    // Set new password
+    user.password = newPassword;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Password reset successful',
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message || 'Server Error' });
   }
 };
 

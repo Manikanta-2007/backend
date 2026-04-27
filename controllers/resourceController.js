@@ -8,7 +8,7 @@ const { resources: mockResources } = require('../utils/sampleData');
 // @desc    Get all resources
 // @route   GET /api/resources
 // @access  Public
-exports.getResources = async (req, res, next) => {
+exports.getResources = async (req, res) => {
   try {
     const { category, subject, resourceType, search } = req.query;
 
@@ -50,19 +50,19 @@ exports.getResources = async (req, res, next) => {
       data: resources,
     });
   } catch (err) {
-    next(err);
+    res.status(500).json({ success: false, error: err.message || 'Server Error' });
   }
 };
 
 // @desc    Get single resource
 // @route   GET /api/resources/:id
 // @access  Public
-exports.getResource = async (req, res, next) => {
+exports.getResource = async (req, res) => {
   try {
     const resource = await Resource.findById(req.params.id).populate('uploadedBy', 'name email');
 
     if (!resource) {
-      return next(new ErrorResponse(`Resource not found with id of ${req.params.id}`, 404));
+      return res.status(404).json({ success: false, error: `Resource not found with id of ${req.params.id}` });
     }
 
     res.status(200).json({
@@ -70,21 +70,21 @@ exports.getResource = async (req, res, next) => {
       data: resource,
     });
   } catch (err) {
-    next(err);
+    res.status(500).json({ success: false, error: err.message || 'Server Error' });
   }
 };
 
 // @desc    Create resource
 // @route   POST /api/resources
 // @access  Private/Admin
-exports.createResource = async (req, res, next) => {
+exports.createResource = async (req, res) => {
   try {
     // Add user to req.body
     req.body.uploadedBy = req.user.id;
 
     // Handle file upload
     if (!req.file) {
-      return next(new ErrorResponse('Please upload a file', 400));
+      return res.status(400).json({ success: false, error: 'Please upload a file' });
     }
 
     req.body.fileUrl = `/uploads/${req.file.filename}`;
@@ -117,24 +117,24 @@ exports.createResource = async (req, res, next) => {
       data: resource,
     });
   } catch (err) {
-    next(err);
+    res.status(500).json({ success: false, error: err.message || 'Server Error' });
   }
 };
 
 // @desc    Update resource
 // @route   PUT /api/resources/:id
 // @access  Private/Admin
-exports.updateResource = async (req, res, next) => {
+exports.updateResource = async (req, res) => {
   try {
     let resource = await Resource.findById(req.params.id);
 
     if (!resource) {
-      return next(new ErrorResponse(`Resource not found with id of ${req.params.id}`, 404));
+      return res.status(404).json({ success: false, error: `Resource not found with id of ${req.params.id}` });
     }
 
     // Make sure user is admin
     if (req.user.role !== 'admin') {
-      return next(new ErrorResponse(`User ${req.user.id} is not authorized to update this resource`, 401));
+      return res.status(401).json({ success: false, error: `User ${req.user.id} is not authorized to update this resource` });
     }
 
     // If new file is uploaded
@@ -157,24 +157,24 @@ exports.updateResource = async (req, res, next) => {
       data: resource,
     });
   } catch (err) {
-    next(err);
+    res.status(500).json({ success: false, error: err.message || 'Server Error' });
   }
 };
 
 // @desc    Delete resource
 // @route   DELETE /api/resources/:id
 // @access  Private/Admin
-exports.deleteResource = async (req, res, next) => {
+exports.deleteResource = async (req, res) => {
   try {
     const resource = await Resource.findById(req.params.id);
 
     if (!resource) {
-      return next(new ErrorResponse(`Resource not found with id of ${req.params.id}`, 404));
+      return res.status(404).json({ success: false, error: `Resource not found with id of ${req.params.id}` });
     }
 
     // Make sure user is admin
     if (req.user.role !== 'admin') {
-      return next(new ErrorResponse(`User ${req.user.id} is not authorized to delete this resource`, 401));
+      return res.status(401).json({ success: false, error: `User ${req.user.id} is not authorized to delete this resource` });
     }
 
     // Delete file
@@ -190,25 +190,25 @@ exports.deleteResource = async (req, res, next) => {
       data: {},
     });
   } catch (err) {
-    next(err);
+    res.status(500).json({ success: false, error: err.message || 'Server Error' });
   }
 };
 
 // @desc    Download resource
 // @route   GET /api/resources/:id/download
 // @access  Public
-exports.downloadResource = async (req, res, next) => {
+exports.downloadResource = async (req, res) => {
   try {
     const resource = await Resource.findById(req.params.id);
 
     if (!resource) {
-      return next(new ErrorResponse(`Resource not found with id of ${req.params.id}`, 404));
+      return res.status(404).json({ success: false, error: `Resource not found with id of ${req.params.id}` });
     }
 
     const filePath = path.join(__dirname, '..', resource.fileUrl);
 
     if (!fs.existsSync(filePath)) {
-      return next(new ErrorResponse('File not found on server', 404));
+      return res.status(404).json({ success: false, error: 'File not found on server' });
     }
 
     // Increment download count
@@ -217,6 +217,6 @@ exports.downloadResource = async (req, res, next) => {
 
     res.download(filePath, `${resource.title}${path.extname(resource.fileUrl)}`);
   } catch (err) {
-    next(err);
+    res.status(500).json({ success: false, error: err.message || 'Server Error' });
   }
 };

@@ -4,7 +4,7 @@ const User = require('../models/User');
 // @desc    Get all users
 // @route   GET /api/users
 // @access  Private/Admin
-exports.getUsers = async (req, res, next) => {
+exports.getUsers = async (req, res) => {
   try {
     const users = await User.find().sort('-createdAt');
 
@@ -14,19 +14,19 @@ exports.getUsers = async (req, res, next) => {
       data: users,
     });
   } catch (err) {
-    next(err);
+    res.status(500).json({ success: false, error: err.message || 'Server Error' });
   }
 };
 
 // @desc    Update user status (Activate/Block)
 // @route   PATCH /api/users/:id/status
 // @access  Private/Admin
-exports.updateUserStatus = async (req, res, next) => {
+exports.updateUserStatus = async (req, res) => {
   try {
     const { status } = req.body;
 
     if (!['active', 'blocked'].includes(status)) {
-      return next(new ErrorResponse('Invalid status', 400));
+      return res.status(400).json({ success: false, error: 'Invalid status' });
     }
 
     const user = await User.findByIdAndUpdate(req.params.id, { status }, {
@@ -35,7 +35,7 @@ exports.updateUserStatus = async (req, res, next) => {
     });
 
     if (!user) {
-      return next(new ErrorResponse(`User not found with id of ${req.params.id}`, 404));
+      return res.status(404).json({ success: false, error: `User not found with id of ${req.params.id}` });
     }
 
     res.status(200).json({
@@ -43,19 +43,19 @@ exports.updateUserStatus = async (req, res, next) => {
       data: user,
     });
   } catch (err) {
-    next(err);
+    res.status(500).json({ success: false, error: err.message || 'Server Error' });
   }
 };
 
 // @desc    Delete user
 // @route   DELETE /api/users/:id
 // @access  Private/Admin
-exports.deleteUser = async (req, res, next) => {
+exports.deleteUser = async (req, res) => {
   try {
     const user = await User.findByIdAndDelete(req.params.id);
 
     if (!user) {
-      return next(new ErrorResponse(`User not found with id of ${req.params.id}`, 404));
+      return res.status(404).json({ success: false, error: `User not found with id of ${req.params.id}` });
     }
 
     res.status(200).json({
@@ -63,6 +63,6 @@ exports.deleteUser = async (req, res, next) => {
       data: {},
     });
   } catch (err) {
-    next(err);
+    res.status(500).json({ success: false, error: err.message || 'Server Error' });
   }
 };

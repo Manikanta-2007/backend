@@ -11,7 +11,7 @@ const Feedback = require('../models/Feedback');
 dotenv.config();
 
 // Connect to DB
-mongoose.connect(process.env.MONGODB_URI);
+mongoose.connect(process.env.MONGO_URI || process.env.MONGODB_URI);
 
 // Read JSON files
 // (For simplicity, I'll define sample data directly here)
